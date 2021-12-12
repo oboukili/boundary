@@ -26,15 +26,14 @@ func Init(t *testing.T, db *dbw.DB) {
 	-- not part of the boundary domain model... they are simply used for testing
 	-- the oplog package 
 	create table if not exists oplog_test_user (
-	  -- id bigint generated always as identity primary key,
 	  id bigserial primary key,
-	  name text,
+	  name text
+	  	constraint oplog_test_user_name_uq unique,
 	  phone_number text,
 	  email text
 	);
 	
 	create table if not exists oplog_test_car (
-	--   id bigint generated always as identity primary key,
 	  id bigserial primary key,
 	  name text unique,
 	  model text,

@@ -312,7 +312,7 @@ func TestWriter_Update(t *testing.T) {
 			w := &Writer{
 				tt.Tx,
 			}
-			u := testUser(t, db, id, id, id) // intentionally, not relying on tt.Tx
+			u := testUser(t, db, tt.name+id, id, id) // intentionally, not relying on tt.Tx
 			u.Name = tt.args.user.Name
 			u.Email = tt.args.user.Email
 			u.PhoneNumber = tt.args.user.PhoneNumber

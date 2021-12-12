@@ -119,3 +119,42 @@ func testInitStore(t *testing.T, cleanup func() error, url string) {
 	require.NoError(t, err)
 	require.NoError(t, sm.ApplyMigrations(ctx))
 }
+
+type constraintResults struct {
+	Name      string
+	TableName string
+}
+
+func testListConstraints(t *testing.T, db *dbw.DB, tableName string) []constraintResults {
+	t.Helper()
+	require := require.New(t)
+	testCtx := context.Background()
+	const constraintSql = `select pgc.conname as name,
+	ccu.table_schema as table_schema,
+	ccu.table_name,
+	ccu.column_name,
+	pgc.consrc as definition
+from pg_constraint pgc
+join pg_namespace nsp on nsp.oid = pgc.connamespace
+join pg_class  cls on pgc.conrelid = cls.oid
+left join information_schema.constraint_column_usage ccu
+	   on pgc.conname = ccu.constraint_name
+	   and nsp.nspname = ccu.constraint_schema 
+-- where contype ='c'
+order by ccu.table_name,pgc.conname `
+
+	rw := dbw.New(db)
+	rows, err := rw.Query(testCtx, constraintSql, []interface{}{tableName})
+	require.NoError(err)
+	type result struct {
+		Name      string
+		TableName string
+	}
+	results := []constraintResults{}
+	for rows.Next() {
+		var r constraintResults
+		rw.ScanRows(rows, &r)
+		results = append(results, r)
+	}
+	return results
+}

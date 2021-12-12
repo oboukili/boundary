@@ -44,7 +44,7 @@ func (w *Writer) createTableLike(ctx context.Context, existingTableName string, 
 	}
 
 	sql := fmt.Sprintf(
-		`CREATE TABLE "%s" ( LIKE %s INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES );`,
+		`CREATE TABLE "%s" ( LIKE %s INCLUDING ALL );`,
 		newTableName,
 		existingTableName,
 	)
