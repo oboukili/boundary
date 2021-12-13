@@ -197,7 +197,7 @@ func convertToDbwOpts(ctx context.Context, opts *OperationOptions) ([]dbw.Option
 		for _, a := range opts.GetWithWhereClauseArgs() {
 			args = append(args, a.AsInterface())
 		}
-		dbwOpts = append(dbwOpts, dbw.WithWhere(sql))
+		dbwOpts = append(dbwOpts, dbw.WithWhere(sql, args...))
 
 	}
 	return dbwOpts, nil

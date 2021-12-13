@@ -385,7 +385,8 @@ func Test_Replay(t *testing.T) {
 			Name:  userCreate.Name,
 			Email: loginName + "@hashicorp.com",
 		}
-		rowsUpdated, err := tx.Update(testCtx, &userSave, []string{"Email"}, nil)
+		version := uint32(1)
+		rowsUpdated, err := tx.Update(testCtx, &userSave, []string{"Email"}, nil, dbw.WithVersion(&version), dbw.WithWhere("name = ?", loginName))
 		require.NoError(err)
 		require.Equal(1, rowsUpdated)
 
@@ -410,7 +411,7 @@ func Test_Replay(t *testing.T) {
 
 		err = newLogEntry.WriteEntryWith(context.Background(), &Writer{tx.DB()}, ticket,
 			&Message{Message: userCreate, TypeName: "user", OpType: OpType_OP_TYPE_CREATE},
-			&Message{Message: &userSave, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: []string{"Name", "Email"}},
+			&Message{Message: &userSave, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: []string{"Email"}, SetToNullPaths: nil, Opts: []dbw.Option{dbw.WithVersion(&version), dbw.WithWhere("name = ?", loginName)}},
 			&Message{Message: &userSave, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: []string{"Name", "Email"}, SetToNullPaths: nil},
 			&Message{Message: &userUpdate, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, SetToNullPaths: []string{"Name"}},
 			&Message{Message: &userUpdate, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: nil, SetToNullPaths: []string{"Name"}},
