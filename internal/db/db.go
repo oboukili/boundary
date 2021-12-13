@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/go-dbw"
 	_ "github.com/jackc/pgx/v4"
 	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func init() {
@@ -80,7 +79,7 @@ func (d *DB) Close(ctx context.Context) error {
 // docs for more information.
 func Open(dbType DbType, connectionUrl string, opt ...Option) (*DB, error) {
 	const op = "db.Open"
-	var dialect gorm.Dialector
+	var dialect dbw.Dialector
 	switch dbType {
 	case Postgres:
 		dialect = postgres.New(postgres.Config{
