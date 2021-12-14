@@ -18,8 +18,7 @@ import (
 
 // Test_BasicOplog provides some basic unit tests for oplogs
 func Test_BasicOplog(t *testing.T) {
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 	testCtx := context.Background()
 
 	t.Run("EncryptData/DecryptData/UnmarshalData", func(t *testing.T) {
@@ -119,8 +118,7 @@ func Test_BasicOplog(t *testing.T) {
 
 // Test_NewEntry provides some basic unit tests for NewEntry
 func Test_NewEntry(t *testing.T) {
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 	testCtx := context.Background()
 
 	t.Run("valid", func(t *testing.T) {
@@ -216,8 +214,7 @@ func Test_NewEntry(t *testing.T) {
 }
 
 func Test_UnmarshalData(t *testing.T) {
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 
 	cipherer := testWrapper(t)
 	testCtx := context.Background()
@@ -341,8 +338,7 @@ func Test_UnmarshalData(t *testing.T) {
 
 // Test_Replay provides some basic unit tests for replaying entries
 func Test_Replay(t *testing.T) {
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 	testCtx := context.Background()
 
 	cipherer := testWrapper(t)
@@ -513,8 +509,7 @@ func Test_Replay(t *testing.T) {
 
 // Test_WriteEntryWith provides unit tests for oplog.WriteEntryWith
 func Test_WriteEntryWith(t *testing.T) {
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 	testCtx := context.Background()
 	cipherer := testWrapper(t)
 
@@ -629,8 +624,7 @@ func Test_WriteEntryWith(t *testing.T) {
 
 func TestEntry_WriteEntryWith(t *testing.T) {
 	testCtx := context.Background()
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 	cipherer := testWrapper(t)
 	db.Debug(true)
 
@@ -826,8 +820,7 @@ func TestEntry_WriteEntryWith(t *testing.T) {
 
 // Test_TicketSerialization provides unit tests for making sure oplog.Tickets properly serialize writes to oplog entries
 func Test_TicketSerialization(t *testing.T) {
-	cleanup, db := setup(t)
-	defer testCleanup(t, cleanup, db)
+	db := setup(t)
 	assert, require := assert.New(t), require.New(t)
 	testCtx := context.Background()
 
