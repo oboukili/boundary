@@ -355,7 +355,7 @@ func Test_Replay(t *testing.T) {
 	ticketer, err := NewTicketer(testCtx, db, WithAggregateNames(true))
 	require.NoError(t, err)
 
-	t.Run("replay:create/update", func(t *testing.T) {
+	t.Run("replay:create/update/createitems", func(t *testing.T) {
 		assert, require := assert.New(t), require.New(t)
 		ticket, err := ticketer.GetTicket(testCtx, "default")
 		require.NoError(err)
@@ -405,6 +405,11 @@ func Test_Replay(t *testing.T) {
 		require.Equal(foundCreateUser.Name, "")
 		require.Equal(foundCreateUser.PhoneNumber, userUpdate.PhoneNumber)
 
+		userCreateItems := &oplog_test.TestUser{
+			Name: "foo-" + testId(t),
+		}
+		require.NoError(dbw.New(db).CreateItems(context.Background(), []interface{}{userCreateItems}))
+
 		err = newLogEntry.WriteEntryWith(context.Background(), &Writer{tx.DB()}, ticket,
 			&Message{Message: userCreate, TypeName: "user", OpType: OpType_OP_TYPE_CREATE},
 			&Message{Message: &userSave, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: []string{"Email"}, SetToNullPaths: nil, Opts: []dbw.Option{dbw.WithVersion(&version), dbw.WithWhere("name = ?", loginName)}},
@@ -412,6 +417,7 @@ func Test_Replay(t *testing.T) {
 			&Message{Message: &userUpdate, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, SetToNullPaths: []string{"Name"}},
 			&Message{Message: &userUpdate, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: nil, SetToNullPaths: []string{"Name"}},
 			&Message{Message: &userUpdate, TypeName: "user", OpType: OpType_OP_TYPE_UPDATE, FieldMaskPaths: []string{"PhoneNumber"}, SetToNullPaths: []string{"Name"}},
+			&Message{Message: userCreateItems, TypeName: "user", OpType: OpType_OP_TYPE_CREATE_ITEMS},
 		)
 		require.NoError(err)
 
@@ -439,6 +445,10 @@ func Test_Replay(t *testing.T) {
 		assert.Equal(foundReplayedUser.PhoneNumber, "867-5309")
 		assert.Equal(foundUser.Email, foundReplayedUser.Email)
 		assert.Equal(foundReplayedUser.Email, loginName+"@hashicorp.com")
+
+		foundReplayedUser.Id = 0
+		require.NoError(tx.LookupWhere(testCtx, &foundReplayedUser, "id = ?", []interface{}{userCreateItems.Id}, dbw.WithDebug(true)))
+		require.NoError(err)
 	})
 
 	t.Run("replay:delete", func(t *testing.T) {
@@ -481,6 +491,70 @@ func Test_Replay(t *testing.T) {
 		err = newLogEntry2.WriteEntryWith(context.Background(), &Writer{tx2.DB()}, ticket2,
 			&Message{Message: &userCreate2, TypeName: "user", OpType: OpType_OP_TYPE_CREATE},
 			&Message{Message: &deleteUser2, TypeName: "user", OpType: OpType_OP_TYPE_DELETE},
+		)
+		require.NoError(err)
+
+		var foundEntry2 Entry
+		err = tx2.LookupWhere(testCtx, &foundEntry2, "id = ?", []interface{}{newLogEntry2.Id})
+		require.NoError(err)
+		foundEntry2.Cipherer = cipherer
+		err = foundEntry2.DecryptData(context.Background())
+		require.NoError(err)
+
+		types, err := NewTypeCatalog(testCtx, Type{new(oplog_test.TestUser), "user"})
+		require.NoError(err)
+
+		err = foundEntry2.Replay(context.Background(), &Writer{tx2.DB()}, types, tableSuffix)
+		require.NoError(err)
+
+		var foundUser2 oplog_test.TestUser
+		err = tx2.LookupWhere(testCtx, &foundUser2, "id = ?", []interface{}{userCreate2.Id})
+		assert.ErrorIs(err, dbw.ErrRecordNotFound)
+
+		var foundReplayedUser2 oplog_test.TestUser
+		err = tx2.LookupWhere(testCtx, &foundReplayedUser2, "id = ?", []interface{}{userCreate2.Id})
+		assert.ErrorIs(err, dbw.ErrRecordNotFound)
+	})
+	t.Run("replay:deleteitems", func(t *testing.T) {
+		assert, require := assert.New(t), require.New(t)
+		// we need to test delete replays now...
+		tx2, err := dbw.New(db).Begin(testCtx)
+		require.NoError(err)
+		defer tx2.Commit(testCtx)
+
+		ticket2, err := ticketer.GetTicket(testCtx, "default")
+		require.NoError(err)
+
+		id4 := testId(t)
+		loginName2 := "foo-" + id4
+		// create a user that's replayable
+		userCreate2 := oplog_test.TestUser{
+			Name: loginName2,
+		}
+		err = tx2.Create(testCtx, &userCreate2)
+		require.NoError(err)
+
+		deleteUser2 := oplog_test.TestUser{
+			Id: userCreate2.Id,
+		}
+		_, err = tx2.DeleteItems(testCtx, []interface{}{&deleteUser2})
+		require.NoError(err)
+
+		newLogEntry2, err := NewEntry(
+			testCtx,
+			"test-users",
+			Metadata{
+				"key-only":   nil,
+				"deployment": []string{"amex"},
+				"project":    []string{"central-info-systems", "local-info-systems"},
+			},
+			cipherer,
+			ticketer,
+		)
+		require.NoError(err)
+		err = newLogEntry2.WriteEntryWith(context.Background(), &Writer{tx2.DB()}, ticket2,
+			&Message{Message: &userCreate2, TypeName: "user", OpType: OpType_OP_TYPE_CREATE},
+			&Message{Message: &deleteUser2, TypeName: "user", OpType: OpType_OP_TYPE_DELETE_ITEMS},
 		)
 		require.NoError(err)
 

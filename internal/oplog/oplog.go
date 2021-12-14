@@ -427,6 +427,9 @@ func (e *Entry) Replay(ctx context.Context, tx *Writer, types *TypeCatalog, tabl
 				return errors.Wrap(ctx, err, op)
 			}
 		case OpType_OP_TYPE_CREATE_ITEMS:
+			// TODO: jimlambrt 12/2021 -> while this will work for
+			// CreateItems(...) it's hardly efficient.  We'll need to refactor
+			// oplog quite a bit to support a multi-message operation.
 			if err := rw.CreateItems(ctx, []interface{}{m.Message}, m.Opts...); err != nil {
 				return errors.Wrap(ctx, err, op)
 			}
@@ -439,6 +442,9 @@ func (e *Entry) Replay(ctx context.Context, tx *Writer, types *TypeCatalog, tabl
 				return errors.Wrap(ctx, err, op)
 			}
 		case OpType_OP_TYPE_DELETE_ITEMS:
+			// TODO: jimlambrt 12/2021 -> while this will work for
+			// DeleteItems(...) it's hardly efficient.  We'll need to refactor
+			// oplog quite a bit to support a multi-message operation.
 			if _, err := rw.DeleteItems(ctx, []interface{}{m.Message}, m.Opts...); err != nil {
 				return errors.Wrap(ctx, err, op)
 			}
