@@ -100,7 +100,7 @@ func TestState_ImmutableFields(t *testing.T) {
 
 	_, _ = iam.TestScopes(t, iam.TestRepo(t, conn, wrapper))
 	session := TestDefaultSession(t, conn, wrapper, iamRepo)
-	state := TestState(t, conn, session.PublicId, StatusPending)
+	state := TestState(t, conn, session.PublicId, StatusActive)
 
 	var new State
 	err := rw.LookupWhere(context.Background(), &new, "session_id = ? and state = ?", state.SessionId, state.Status)
@@ -124,7 +124,7 @@ func TestState_ImmutableFields(t *testing.T) {
 			name: "status",
 			update: func() *State {
 				s := new.Clone().(*State)
-				s.Status = "active"
+				s.Status = "canceling"
 				return s
 			}(),
 			fieldMask: []string{"Status"},

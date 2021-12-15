@@ -9,6 +9,7 @@ begin;
   --  * auth
   --  * hosts
   --  * targets
+  --  * sessions
   --
   -- Note that some aggregates depend on data from other aggretates, so the order
   -- that they are passed to this function matters.
