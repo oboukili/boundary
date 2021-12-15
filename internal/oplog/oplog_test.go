@@ -790,6 +790,20 @@ func TestEntry_WriteEntryWith(t *testing.T) {
 			},
 		},
 		{
+			name: "on-conflict-columns-set-col-value",
+			e:    newEntryFn(),
+			w:    &Writer{db},
+			msg: &Message{
+				Message:  testUser(t, db, "foo-"+testId(t), "", ""),
+				TypeName: "user", OpType: OpType_OP_TYPE_CREATE,
+				Opts: []dbw.Option{
+					dbw.WithOnConflict(&dbw.OnConflict{
+						Target: dbw.Columns{"name"},
+						Action: dbw.SetColumns([]string{"email"}),
+					})},
+			},
+		},
+		{
 			name: "missing-entry",
 			e:    func() *Entry { e := newEntryFn(); e.Entry = nil; return e }(),
 			w:    &Writer{db},

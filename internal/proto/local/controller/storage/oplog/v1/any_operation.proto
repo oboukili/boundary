@@ -69,6 +69,7 @@ message OperationOptions {
   // with_where_clause_args (see dbw package for docs)
   repeated google.protobuf.Value with_where_clause_args = 4;
 
+  // with_on_conflict (see dbw package for docs)
   WithOnConflict with_on_conflict = 5;
 }
 
@@ -111,6 +112,7 @@ message ColumnValue {
   oneof value {
     google.protobuf.Value raw = 2;
     ExprValue expr_value = 3;
+    Column column = 4;
   };
 }
 
@@ -127,4 +129,12 @@ message ExprValue {
 
   // args are the sql args of the expr
   repeated google.protobuf.Value args = 2;
+}
+
+// Column represents a table Column
+message Column {
+  // name of the column
+  string name = 1;
+  // table name of the column
+  string table = 2;
 }

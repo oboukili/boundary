@@ -182,6 +182,13 @@ func convertToDbwOpts(ctx context.Context, opts *OperationOptions) ([]dbw.Option
 						args = append(args, a.AsInterface())
 					}
 					newColVal.Value = expr
+				case *ColumnValue_Column:
+					newColVal.Value = dbw.Column{
+						Name:  pbVal.Column.GetName(),
+						Table: pbVal.Column.GetTable(),
+					}
+				default:
+					return nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("not a supported column value type: %T", pbVal))
 				}
 				cvAction = append(cvAction, newColVal)
 			}
@@ -263,6 +270,13 @@ func convertFromDbwOpts(ctx context.Context, opts dbw.Options) (*OperationOption
 						Sql:  cvVal.Sql,
 						Args: args,
 					}}
+				case dbw.Column:
+					pbColVal.Value = &ColumnValue_Column{
+						&Column{
+							Name:  cvVal.Name,
+							Table: cvVal.Table,
+						},
+					}
 				default:
 					exprVal, err := structpb.NewValue(cv.Value)
 					if err != nil {
