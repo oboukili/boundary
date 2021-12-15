@@ -2,6 +2,13 @@
 
 Canonical reference for changes, improvements, and bugfixes for Boundary.
 
+## 0.7.3 (2021/12/16)
+
+### Bug Fixes
+
+* target: Fix actions permission bug which prevented the UI from being able to add and
+  remove host sources. ([PR](https://github.com/hashicorp/boundary/pull/1794))
+
 ## 0.7.2 (2021/12/14)
 
 ### Security
