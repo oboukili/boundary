@@ -16,21 +16,12 @@ DELETE FROM session_state t1
 
 drop table session_state_delete;
 
--- Update session_state so any active/ pending sessions are set to canceling
--- This will cancel sessions when we close all open session connections
-insert into session_state (session_id, state)
-    (select s1.session_id, 'canceling' from session_state s1
-        inner join (
-            select session_id, max(start_time) as st from session_state
-            group by session_id) s2
-        on s1.session_id=s2.session_id and s1.start_time=s2.st
-     where state in('pending','active'));
-
 -- Close all open session_connections
--- This will trigger the closure of sessions: update_connection_state_on_closed_reason -> terminate_session_if_possible
 update session_connection
-set closed_reason='canceled' where public_id in
-    (select public_id from session_connection where closed_reason is null);
+set closed_reason='canceled' where closed_reason is null;
+
+update session
+set termination_reason='canceled' where termination_reason is null;
 
 -- Migration
 
